@@ -1,0 +1,14 @@
+File copied: C:\Users\Cristi\source\repos\sync\sursa\ceva.txt -> C:\Users\Cristi\source\repos\sync\destinatie\ceva.txt
+File copied: C:\Users\Cristi\source\repos\sync\sursa\df.rtf -> C:\Users\Cristi\source\repos\sync\destinatie\df.rtf
+File copied: C:\Users\Cristi\source\repos\sync\sursa\New Microsoft Publisher Document.pub -> C:\Users\Cristi\source\repos\sync\destinatie\New Microsoft Publisher Document.pub
+File copied: C:\Users\Cristi\source\repos\sync\sursa\New Rich Text Document.rtf -> C:\Users\Cristi\source\repos\sync\destinatie\New Rich Text Document.rtf
+File copied: C:\Users\Cristi\source\repos\sync\sursa\New WinRAR archive.rar -> C:\Users\Cristi\source\repos\sync\destinatie\New WinRAR archive.rar
+Created folder: C:\Users\Cristi\source\repos\sync\destinatie\nou
+File copied: C:\Users\Cristi\source\repos\sync\sursa\nou\New WinRAR archive.rar -> C:\Users\Cristi\source\repos\sync\destinatie\nou\New WinRAR archive.rar
+Error: copy_file: The system cannot find the path specified.: "C:\Users\Cristi\source\repos\sync\sursa\ceva.txt", "C:\Users\Cristi\source\repos\sync\destinatie\ceva.txt"
+Error: copy_file: The system cannot find the path specified.: "C:\Users\Cristi\source\repos\sync\sursa\ceva.txt", "C:\Users\Cristi\source\repos\sync\destinatie\ceva.txt"
+Error: copy_file: The system cannot find the path specified.: "C:\Users\Cristi\source\repos\sync\sursa\ceva.txt", "C:\Users\Cristi\source\repos\sync\destinatie\ceva.txt"
+Error: copy_file: The system cannot find the path specified.: "C:\Users\Cristi\source\repos\sync\sursa\ceva.txt", "C:\Users\Cristi\source\repos\sync\destinatie\ceva.txt"
+Error: copy_file: The system cannot find the path specified.: "C:\Users\Cristi\source\repos\sync\sursa\ceva.txt", "C:\Users\Cristi\source\repos\sync\destinatie\ceva.txt"
+Error: copy_file: The system cannot find the path specified.: "C:\Users\Cristi\source\repos\sync\sursa\ceva.txt", "C:\Users\Cristi\source\repos\sync\destinatie\ceva.txt"
+Error: copy_file: The system cannot find the path specified.: "C:\Users\Cristi\source\repos\sync\sursa\ceva.txt", "C:\Users\Cristi\source\repos\sync\destinatie\ceva.txt"

@@ -32,10 +32,13 @@ int main()
 #include <iostream>
 #include <filesystem>
 #include <exception>
+#include <thread>
+#include <chrono>
 
 
 #include <openssl/md5.h>
 #include <sstream>
+#include <fstream>
 
 namespace fs = std::filesystem;
 /*
@@ -69,18 +72,35 @@ std::string calc_md5(const std::string& file_path) {
 
     return ss.str();
 } */
-void sync_folders(const fs::path& source, const fs::path& destination)
+void sync_folders(const fs::path& source, const fs::path& destination , std::ofstream& logFile)
 {
     try {
         for (const auto& entry : fs::directory_iterator(source)) {
             const auto entry_path = entry.path();
             const auto destination_path = destination / entry_path.filename();
             if (fs::is_directory(entry_path)) {
-                fs::create_directory(destination_path);
-                sync_folders(entry_path, destination_path);
+                if (!fs::exists(destination_path)) {
+                    fs::create_directory(destination_path);
+                    logFile << "Created folder: " << destination_path.string() << std::endl;
+                    std::cout << "Created folder: " << destination_path.string() << std::endl;
+                }
+                sync_folders(entry_path, destination_path, logFile);
             }
-            else {
-                fs::copy_file(entry_path, destination_path, fs::copy_options::overwrite_existing);
+            else if(fs::is_regular_file(entry_path)){
+                if (fs::exists(destination_path)) {
+                    if (fs::last_write_time(entry_path) > fs::last_write_time(destination_path)) {
+                        fs::copy_file(entry_path, destination_path, fs::copy_options::overwrite_existing);
+                        logFile << "File copied: " << entry_path.string() << " -> " << destination_path.string() << std::endl;
+                       // logFile << "File copied: " << entry_path.string() << " -> " << destination_path.string() << std::endl;
+                        std::cout<< "File copied: " << entry_path.string() << " -> " << destination_path.string() << std::endl;
+                    }
+                }
+                else {
+                    fs::copy_file(entry_path, destination_path, fs::copy_options::overwrite_existing);
+                    logFile << "File copied: " << entry_path.string() << " -> " << destination_path.string() << std::endl;
+                    std::cout << "File copied: " << entry_path.string() << " -> " << destination_path.string() << std::endl;
+                   // logFile << "File copied: " << entry_path.string() << " -> " << destination_path.string() << std::endl;
+                }
             }
         }
 
@@ -90,17 +110,20 @@ void sync_folders(const fs::path& source, const fs::path& destination)
             if (fs::is_directory(entry_path)) {
                 if (!fs::exists(source_path)) {
                     fs::remove_all(entry_path);
+                    logFile << "Removed directory: " << entry_path.string();
                 }
             }
             else {
                 if (!fs::exists(source_path)) {
                     fs::remove(entry_path);
+                    logFile << "Removed file: " << entry_path.string();
                 }
             }
         }
     }
     catch (const std::exception& ex) {
         std::cout << ex.what();
+        logFile << "Error: " << ex.what() << std::endl;
     }
 }
 bool is_path_valid(const fs::path& path)
@@ -128,22 +151,94 @@ void print_files_in_directory(const fs::path& directory)
         std::cout << ex.what();
     }
 }
-int main()
+int main(int argc, char** argv)
 {
+    if (argc != 5) {
+        std::cout << "Usage: " << argv[0] << " <source_folder> <destination_folder> <log_file_path> <interval_seconds>" << std::endl;
+        return 1;
+    }
+    std::ofstream logFile;
+    const auto source_folder = fs::path(argv[1]);
+    const auto destination_folder = fs::path(argv[2]);
+    const auto logFile_path = fs::path(argv[3]);
+    const auto interval_seconds = std::stoi(argv[4]);
+
+    if (!fs::exists(source_folder)) {
+        std::cout << "Source folder does not exist" << std::endl;
+        return 1;
+    }
+
+    if (!fs::exists(destination_folder)) {
+        std::cout << "Destination folder does not exist" << std::endl;
+        return 1;
+    }
+    if (!fs::exists(logFile_path)) {
+        std::cout << "Logfile does not exist" << std::endl;
+        return 1;
+    }
+    else {
+        
+        logFile.open(logFile_path); 
+    }
+
+    std::cout << "Syncing folders every " << interval_seconds << " seconds" << std::endl;
+
+    /*const int n_seconds = 10;
     const fs::path source_folder = "C:\\Users\\Cristi\\source\\repos\\sync\\sursa";
     const fs::path destination_folder = "C:\\Users\\Cristi\\source\\repos\\sync\\destinatie";
+    std::ofstream logFile;
+    logFile.open("C:\\Users\\Cristi\\source\\repos\\sync\\log.txt"); */
+    
+    // logFile.flush(); 
     if (is_path_valid(source_folder) == true) {
         std::cout << "valid path" << std::endl;
         std::cout << "files in folder are:" << std::endl;
         print_files_in_directory(source_folder);
-        std::cout << "starting sync" << std::endl;
-        sync_folders(source_folder, destination_folder);
+        std::cout << "starting sync" << std::endl; 
+        sync_folders(source_folder, destination_folder,logFile);
         std::cout << "sync succesful";
     }
     else
-        std::cout << "invalid path";
-    /*std::cout << "Current path is " << fs::current_path() << '\n'; // (1)
-    fs::current_path(fs::temp_directory_path()); // (3)
-    std::cout << "Current path is " << fs::current_path() << '\n'; */
+        logFile << "invalid path";
+    while (true) {
+        try {
+            if (!fs::exists(source_folder)) {
+                std::cout << "Source folder does not exist" << std::endl;
+                return 1;
+            }
+
+            if (!fs::exists(destination_folder)) {
+                std::cout << "Destination folder does not exist" << std::endl;
+                throw std::invalid_argument("WOOOOOOOOOOOOOOOOOOOOOW");
+                return 1;
+            }
+            if (!fs::exists(logFile_path)) {
+                std::cout << "Logfile does not exist" << std::endl;
+                return 1;
+            }
+
+
+
+            auto start_time = std::chrono::high_resolution_clock::now();
+            std::cout << "starting sync" << std::endl;//<< std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) << std::endl;
+            sync_folders(source_folder, destination_folder, logFile);
+            std::cout << "sync succesful" << std::endl;
+            auto end_time = std::chrono::high_resolution_clock::now();
+            auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time); // Calculate duration
+            auto current_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); // Get current time
+            //logFile << "Sync completed at " << std::ctime(&current_time) << " Duration: " << elapsed_time.count() << "ms" << std::endl;
+           // std::cout<< "Sync completed at " << std::ctime(&current_time) << " Duration: " << elapsed_time.count() << "ms" << std::endl;
+            // sleep for remaining time until n_seconds has elapsed
+
+            //std::cout << "Sync completed at " << std::ctime(&end_time) << std::endl;
+
+            std::this_thread::sleep_for(std::chrono::seconds(interval_seconds));
+        }
+        catch (const std::exception& ex) {
+            std::cout << ex.what();
+            logFile << "Error: " << ex.what() << std::endl;
+        }
+    }
+    logFile.close();
     return 0;
 }
