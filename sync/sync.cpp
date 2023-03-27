@@ -31,36 +31,76 @@ int main()
 
 #include <iostream>
 #include <filesystem>
+#include <exception>
+
+
+#include <openssl/md5.h>
+#include <sstream>
 
 namespace fs = std::filesystem;
+/*
+std::string calc_md5(const std::string& file_path) {
+    std::ifstream file(file_path, std::ios::binary);
 
-void sync_folders(const fs::path& source, const fs::path& destination)
-{
-    for (const auto& entry : fs::directory_iterator(source)) {
-        const auto entry_path = entry.path();
-        const auto destination_path = destination / entry_path.filename();
-        if (fs::is_directory(entry_path)) {
-            fs::create_directory(destination_path);
-            sync_folders(entry_path, destination_path);
-        }
-        else {
-            fs::copy_file(entry_path, destination_path, fs::copy_options::overwrite_existing);
-        }
+    if (!file) {
+        throw std::runtime_error("Cannot open file");
     }
 
-    for (const auto& entry : fs::directory_iterator(destination)) {
-        const auto entry_path = entry.path();
-        const auto source_path = source / entry_path.filename();
-        if (fs::is_directory(entry_path)) {
-            if (!fs::exists(source_path)) {
-                fs::remove_all(entry_path);
+    MD5_CTX md5_ctx;
+    MD5_Init(&md5_ctx);
+
+    char buffer[1024];
+    while (file.read(buffer, sizeof(buffer))) {
+        MD5_Update(&md5_ctx, buffer, sizeof(buffer));
+    }
+
+    if (file.gcount() > 0) {
+        MD5_Update(&md5_ctx, buffer, file.gcount());
+    }
+
+    unsigned char hash[MD5_DIGEST_LENGTH];
+    MD5_Final(hash, &md5_ctx);
+
+    std::stringstream ss;
+    ss << std::hex << std::setfill('0');
+    for (auto b : hash) {
+        ss << std::setw(2) << static_cast<int>(b);
+    }
+
+    return ss.str();
+} */
+void sync_folders(const fs::path& source, const fs::path& destination)
+{
+    try {
+        for (const auto& entry : fs::directory_iterator(source)) {
+            const auto entry_path = entry.path();
+            const auto destination_path = destination / entry_path.filename();
+            if (fs::is_directory(entry_path)) {
+                fs::create_directory(destination_path);
+                sync_folders(entry_path, destination_path);
+            }
+            else {
+                fs::copy_file(entry_path, destination_path, fs::copy_options::overwrite_existing);
             }
         }
-        else {
-            if (!fs::exists(source_path)) {
-                fs::remove(entry_path);
+
+        for (const auto& entry : fs::directory_iterator(destination)) {
+            const auto entry_path = entry.path();
+            const auto source_path = source / entry_path.filename();
+            if (fs::is_directory(entry_path)) {
+                if (!fs::exists(source_path)) {
+                    fs::remove_all(entry_path);
+                }
+            }
+            else {
+                if (!fs::exists(source_path)) {
+                    fs::remove(entry_path);
+                }
             }
         }
+    }
+    catch (const std::exception& ex) {
+        std::cout << ex.what();
     }
 }
 bool is_path_valid(const fs::path& path)
@@ -69,18 +109,23 @@ bool is_path_valid(const fs::path& path)
         const auto status = fs::status(path);
         return true;
     }
-    catch (const std::exception& ex) {
+    catch (const std::filesystem::filesystem_error & ex) {
         std::cerr << ex.what() << std::endl;
         return false;
     }
 }
 void print_files_in_directory(const fs::path& directory)
 {
-    for (const auto& entry : fs::directory_iterator(directory)) {
-        const auto& path = entry.path();
-        if (fs::is_regular_file(path)) {
-            std::cout << path.filename() << std::endl;
+    try {
+        for (const auto& entry : fs::directory_iterator(directory)) {
+            const auto& path = entry.path();
+            if (fs::is_regular_file(path)) {
+                std::cout << path.filename() << std::endl;
+            }
         }
+    }
+    catch (const std::exception& ex) {
+        std::cout << ex.what();
     }
 }
 int main()
