@@ -89,10 +89,15 @@ void sync_folders(const fs::path& source, const fs::path& destination , std::ofs
             else if(fs::is_regular_file(entry_path)){
                 if (fs::exists(destination_path)) {
                     if (fs::last_write_time(entry_path) > fs::last_write_time(destination_path)) {
-                        fs::copy_file(entry_path, destination_path, fs::copy_options::overwrite_existing);
-                        logFile << "File copied: " << entry_path.string() << " -> " << destination_path.string() << std::endl;
-                       // logFile << "File copied: " << entry_path.string() << " -> " << destination_path.string() << std::endl;
-                        std::cout<< "File copied: " << entry_path.string() << " -> " << destination_path.string() << std::endl;
+                        bool works = fs::copy_file(entry_path, destination_path, fs::copy_options::overwrite_existing);
+                        if (works) {
+                            logFile << "File copied: " << entry_path.string() << " -> " << destination_path.string() << std::endl;
+                            // logFile << "File copied: " << entry_path.string() << " -> " << destination_path.string() << std::endl;
+                            std::cout << "File copied: " << entry_path.string() << " -> " << destination_path.string() << std::endl;
+                        }
+                        else {
+                            throw std::exception("");
+                        }
                     }
                 }
                 else {
@@ -204,16 +209,18 @@ int main(int argc, char** argv)
         try {
             if (!fs::exists(source_folder)) {
                 std::cout << "Source folder does not exist" << std::endl;
+                logFile << "Source folder does not exist" << std::endl;
                 return 1;
             }
 
             if (!fs::exists(destination_folder)) {
                 std::cout << "Destination folder does not exist" << std::endl;
-                throw std::invalid_argument("WOOOOOOOOOOOOOOOOOOOOOW");
+                logFile << "Destination folder does not exist" << std::endl;
                 return 1;
             }
             if (!fs::exists(logFile_path)) {
                 std::cout << "Logfile does not exist" << std::endl;
+                logFile<< "Logfile does not exist" << std::endl;
                 return 1;
             }
 
